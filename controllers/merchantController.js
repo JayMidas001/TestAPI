@@ -43,13 +43,6 @@ const signUp = async (req, res) => {
                 description,
                 profileImage: image.secure_url
             });
-            fs.unlink(filePath, (err) => {
-                if (err) {
-                    console.error(`Failed to delete local file: ${filePath}`, err);
-                } else {
-                    console.log(`Successfully deleted local file: ${filePath}`);
-                }
-            });
 
             const userToken = jwt.sign(
                 { id: user._id, email: user.email },
@@ -60,7 +53,7 @@ const signUp = async (req, res) => {
                 "host"
             )}/api/v1/verify/${userToken}`;
             
-            isAdmin = true
+            
             await user.save();
             await sendMail({
                 subject: `Kindly Verify your mail`,
