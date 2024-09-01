@@ -21,7 +21,7 @@ const signUp = async (req, res) => {
 
         const { businessName, email, password, phoneNumber, address, description } = req.body;
         const file = req.file
-        const image = await cloudinary.uploader.upload(file.path)
+        const image = await cloudinary.uploader.upload(file)
         if(!businessName || !email || !password || !phoneNumber || !address ){
             return res.status(400).json(`Please enter all fields.`)
         }
