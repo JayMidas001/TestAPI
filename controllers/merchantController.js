@@ -20,7 +20,7 @@ const signUp = async (req, res) => {
     try {
 
         const { businessName, email, password, phoneNumber, address, description } = req.body;
-        const file = req.file
+        const file = req.file.path
         const image = await cloudinary.uploader.upload(file)
         if(!businessName || !email || !password || !phoneNumber || !address ){
             return res.status(400).json(`Please enter all fields.`)
@@ -34,7 +34,7 @@ const signUp = async (req, res) => {
             //perform an encrytion of the salted password
             const hashedPassword = await bcrypt.hash(password, saltedPassword);
             // create object of the body
-            const user = new userModel({
+            const user = new merchModel({
                 businessName,
                 email,
                 password: hashedPassword,
@@ -42,6 +42,13 @@ const signUp = async (req, res) => {
                 address,
                 description,
                 profileImage: image.secure_url
+            });
+            fs.unlink(filePath, (err) => {
+                if (err) {
+                    console.error(`Failed to delete local file: ${filePath}`, err);
+                } else {
+                    console.log(`Successfully deleted local file: ${filePath}`);
+                }
             });
 
             const userToken = jwt.sign(
@@ -58,7 +65,7 @@ const signUp = async (req, res) => {
             await sendMail({
                 subject: `Kindly Verify your mail`,
                 email: user.email,
-                html: signUpTemplate(verifyLink, user.firstName),
+                html: signUpTemplate(verifyLink, user.businessName),
             });
             res.status(201).json({
                 message: `Welcome ${user.businessName} kindly check your gmail to access the link to verify your email`,
@@ -178,7 +185,7 @@ const resendVerificationEmail = async (req, res) => {
         let mailOptions = {
             email: user.email,
             subject: "Verification email",
-            html: verifyTemplate(verifyLink, user.firstName),
+            html: verifyTemplate(verifyLink, user.businessName),
         };
         // Send the the email
         await sendMail(mailOptions);
@@ -218,7 +225,7 @@ const forgotPassword = async (req, res) => {
         const mailOptions = {
             email: user.email,
             subject: "Password Reset",
-            html: forgotPasswordTemplate(resetLink, user.firstName),
+            html: forgotPasswordTemplate(resetLink, user.businessName),
         };
         //   Send the email
         await sendMail(mailOptions);
@@ -306,7 +313,7 @@ const changePassword = async (req, res) => {
         let mailOptions = {
             email: user.email,
             subject: "Password Changed",
-            html: passwordChangeTemplate(user.firstName),
+            html: passwordChangeTemplate(user.businessName),
         };
         // Send the the email
         await sendMail(mailOptions);

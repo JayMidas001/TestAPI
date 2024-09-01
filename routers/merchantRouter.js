@@ -1,10 +1,10 @@
 const express = require('express')
+const upload = require("../utils/multer")
 const { signUp, userLogin, verifyEmail, resendVerificationEmail, forgotPassword, changePassword, resetPassword, getOneUser, makeAdmin, userLogOut } = require('../controllers/merchantController')
 const midasValidator = require('../middlewares/validator')
-
 const router = express.Router()
 
-router.post('/merchant-signup', midasValidator(false), signUp)
+router.post('/merchant-signup', midasValidator(false), upload.single('profileImage'), signUp)
 
 router.post(`/merchant-login`, midasValidator(false), userLogin)
 
