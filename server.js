@@ -17,6 +17,10 @@ app.use(`/api/v1`, merchantRouter)
 app.use(`/api/v1`, productRouter)
 app.use('/uploads', express.static('uploads'))
 
+app.get(`/`, (req, res)=>{
+    res.send(`Welcome to Groceria!`)
+})
+
 app.listen(port,()=>{
     console.log("App is currently Up & Running, server is listening to port:", port);
 })
