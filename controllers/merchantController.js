@@ -1,9 +1,11 @@
 const merchModel = require(`../models/merchantModel.js`)
 const bcrypt = require(`bcrypt`)
+const cloudinary = require(`cloudinary`)
 const jwt = require(`jsonwebtoken`)
 const fs = require(`fs`)
 const path = require('path')
 const sendMail = require(`../helpers/email.js`);
+
 const {
     signUpTemplate,
     verifyTemplate,
