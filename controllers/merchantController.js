@@ -1,6 +1,8 @@
-const userModel = require(`../models/userModel`)
+const merchModel = require(`../models/merchantModel.js`)
 const bcrypt = require(`bcrypt`)
 const jwt = require(`jsonwebtoken`)
+const fs = require(`fs`)
+const path = require('path')
 const sendMail = require(`../helpers/email.js`);
 const {
     signUpTemplate,
@@ -12,14 +14,16 @@ const {
 
 
 
-const userSignUp = async (req, res) => {
+const signUp = async (req, res) => {
     try {
 
-        const { fullName, email, password, phoneNumber} = req.body;
-        if(!fullName || !email || !password || !phoneNumber ){
+        const { businessName, email, password, phoneNumber, address, description } = req.body;
+        const file = req.file
+        const image = await cloudinary.uploader.upload(file.path)
+        if(!businessName || !email || !password || !phoneNumber || !address ){
             return res.status(400).json(`Please enter all fields.`)
         }
-        const emailExist = await userModel.findOne({ email });
+        const emailExist = await merchModel.findOne({ email });
         if (emailExist) {
             return res.status(400).json(`User with email already exist.`);
         } else {
@@ -29,10 +33,13 @@ const userSignUp = async (req, res) => {
             const hashedPassword = await bcrypt.hash(password, saltedPassword);
             // create object of the body
             const user = new userModel({
-                fullName,
+                businessName,
                 email,
                 password: hashedPassword,
-                phoneNumber
+                phoneNumber, 
+                address,
+                description,
+                profileImage: image.secure_url
             });
 
             const userToken = jwt.sign(
@@ -43,22 +50,21 @@ const userSignUp = async (req, res) => {
             const verifyLink = `${req.protocol}://${req.get(
                 "host"
             )}/api/v1/verify/${userToken}`;
-    
+            
+            isAdmin = true
             await user.save();
             await sendMail({
                 subject: `Kindly Verify your mail`,
                 email: user.email,
-                html: signUpTemplate(verifyLink, user.fullName),
+                html: signUpTemplate(verifyLink, user.firstName),
             });
             res.status(201).json({
-                message: `Welcome ${user.fullName} kindly check your gmail to access the link to verify your email`,
+                message: `Welcome ${user.businessName} kindly check your gmail to access the link to verify your email`,
                 data: user,
             });
         }
     } catch (error) {
-        res.status(500).json({
-            message: error.message,
-        });
+        res.status(500).json(error.message);
     }
 };
 
@@ -69,7 +75,7 @@ const verifyEmail = async (req, res) => {
         // Extract the email from the verified token
         const { email } = jwt.verify(token, process.env.jwt_secret);
         // Find the user with the email
-        const user = await userModel.findOne({ email });
+        const user = await merchModel.findOne({ email });
         // Check if the user is still in the database
         if (!user) {
             return res.status(404).json({
@@ -103,7 +109,7 @@ const verifyEmail = async (req, res) => {
 const userLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const existingUser = await userModel.findOne({
+        const existingUser = await merchModel.findOne({
             email
         });
         if (!existingUser) {
@@ -146,7 +152,7 @@ const resendVerificationEmail = async (req, res) => {
     try {
         const { email } = req.body;
         // Find the user with the email
-        const user = await userModel.findOne({ email });
+        const user = await merchModel.findOne({ email });
         // Check if the user is still in the database
         if (!user) {
             return res.status(404).json({
@@ -191,7 +197,7 @@ const forgotPassword = async (req, res) => {
         const { email } = req.body;
 
         // Check if the email exists in the database
-        const user = await userModel.findOne({ email });
+        const user = await merchModel.findOne({ email });
         if (!user) {
             return res.status(404).json({
                 message: "User not found"
@@ -234,7 +240,7 @@ const resetPassword = async (req, res) => {
         const { email } = jwt.verify(token, process.env.jwt_secret);
 
         // Find the user by ID
-        const user = await userModel.findOne({ email });
+        const user = await merchModel.findOne({ email });
         if (!user) {
             return res.status(404).json({
                 message: "User not found",
@@ -269,7 +275,7 @@ const changePassword = async (req, res) => {
         const { email } = jwt.verify(token, process.env.jwt_secret);
 
         // Find the user by ID
-        const user = await userModel.findOne({ email });
+        const user = await merchModel.findOne({ email });
         if (!user) {
             return res.status(404).json({
                 message: "User not found.",
@@ -316,7 +322,7 @@ const changePassword = async (req, res) => {
 const makeAdmin = async(req, res)=> {
     try {
         const {userId} = req.params
-        const user = await userModel.findById(userId)
+        const user = await merchModel.findById(userId)
         if(!user){
             return res.status(404).json(`User with ID ${userId} was not found`)
         }
@@ -333,20 +339,18 @@ const getOneUser = async (req, res) => {
     try {
         const {userId} = req.params
 
-        const user = await userModel.findById(userId)
+        const user = await merchModel.findById(userId)
         if(!user){
-            return res.status(404).json(`User not found.`)
+            return res.status(404).json(`Business not found.`)
         }
         res.status(200).json({
-            message: `Dear ${user.firstName}, kindly find your information below:`,
+            message: `Business found.`,
             data: user
         })
     } catch (error) {
         res.status(500).json(error.message)
     }
 }
-
-
 
 const userLogOut = async (req, res) => {
     try {
@@ -361,7 +365,7 @@ const userLogOut = async (req, res) => {
         // Verify the user's token and extract the user's email from the token
         const { email } = jwt.verify(token, process.env.jwt_secret);
         // Find the user by ID
-        const user = await userModel.findOne({ email });
+        const user = await merchModel.findOne({ email });
         if (!user) {
             return res.status(404).json({
                 message: "User not found"
@@ -381,6 +385,7 @@ const userLogOut = async (req, res) => {
     }
 }
 
+
 module.exports ={
-    userSignUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, makeAdmin, getOneUser, userLogOut
+    signUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, makeAdmin, getOneUser, userLogOut
 }

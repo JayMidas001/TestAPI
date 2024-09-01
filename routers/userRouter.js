@@ -2,12 +2,13 @@ const express = require('express')
 const {
     userSignUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, makeAdmin, getOneUser, userLogOut
 } = require('../controllers/userController')
+const { signUpValidator, logInValidator } = require('../middlewares/validator')
 
 const router = express.Router()
 
-router.post('/sign-up', userSignUp)
+router.post('/sign-up', signUpValidator, userSignUp)
 
-router.post(`/log-in`, userLogin)
+router.post(`/log-in`, logInValidator, userLogin)
 
 router.get(`/verify/:token`, verifyEmail)
 

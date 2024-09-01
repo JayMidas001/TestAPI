@@ -1,11 +1,7 @@
 const mongoose = require('mongoose')
 
 const userSchema = new mongoose.Schema({
-    firstName: {
-        type: String,
-        require: true
-    },
-    lastName: {
+    fullName: {
         type: String,
         require: true
     },
@@ -22,13 +18,15 @@ const userSchema = new mongoose.Schema({
         require: true
     },
     address: {
-        type: String,
-        require: true
+        type: String
     },
     isVerified:{
         type:String
     },
     isAdmin:{
+        type:String
+    },
+    isSuperAdmin:{
         type:String
     },
     blackList:[]
