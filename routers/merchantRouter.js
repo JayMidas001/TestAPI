@@ -4,9 +4,9 @@ const midasValidator = require('../middlewares/validator')
 
 const router = express.Router()
 
-router.post('/merchant-signup', midasValidator, signUp)
+router.post('/merchant-signup', midasValidator(false), signUp)
 
-router.post(`/merchant-login`, midasValidator, userLogin)
+router.post(`/merchant-login`, midasValidator(false), userLogin)
 
 router.get(`/merchant-verify/:token`, verifyEmail)
 
@@ -14,7 +14,7 @@ router.post(`/merchant-resendverification`, resendVerificationEmail)
 
 router.post(`/merchant-forgotpassword`, forgotPassword)
 
-router.post(`/merchant-changepassword/:token`, midasValidator, changePassword)
+router.post(`/merchant-changepassword/:token`, midasValidator(false), changePassword)
 
 router.post(`/merchant-reset-password/:token`, resetPassword)
 
