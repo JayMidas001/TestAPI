@@ -1,81 +1,84 @@
-const Joi = require('@hapi/joi');
+const validator = require('@hapi/joi')
 
-const signUpValidator = async (req, res, next) => {
-    const schema = Joi.object({
-        fullName: Joi.string()
-        .min(3)
-        .required()
-        .pattern(new RegExp(/^[^\s].+[^\s]$/))
-        .messages({
-            "any.required": "Fullname is required.",
-            "string.empty": "Fullname cannot be an empty string.",
-            "string.min": "Full name must be at least 3 characters long.",
-            "string.pattern.base": "Full name cannot start or end with a whitespace.",
-          }),
-        phoneNumber: Joi.string()
-        .length(11)
-        .pattern(/^\d+$/)
-        .required()
-        .messages({
-          "any.required": "Phone number is required.",
-          "string.length": "Phone number must be exactly 11 digits.",
-          "string.pattern.base": "Phone number must contain only numeric digits.",
-        }),
-        email: Joi.string().trim().email().messages({
-            "any.required": "Please provide your email address.",
-            "string.empty": "Email address cannot be left empty.",
-            "string.email": "Invalid email format. Please use a valid email address.",
-        }),
-        password: Joi.string().required().pattern(new RegExp("^(?=.*[!@#$%^&])(?=.*[A-Z]).{8,}$")).messages({
-            "any.required": "Please provide a password.",
-            "string.empty": "Password cannot be left empty.",
-            "string.pattern.base":
-            "Password must be at least 8 characters long and include at least one uppercase letter and one special character (!@#$%^&*).",
-        }),
-        address: Joi.string()
-        .required()
-        .trim()
-        .messages({
-        "string.base": "Customer address must be a string",
-        "string.empty": "Customer address must not be an empty string",
-        "any.required": "Customer address is required",
+const schemas = {
+    
+    businessName:validator.string().min(3).required().pattern(new RegExp(/^[^\s].+[^\s]$/)).messages({
+        "any.required": "Fullname is required.",
+        "string.empty": "Fullname cannot be an empty string.",
+        "string.min": "Full name must be at least 3 characters long.",
+        "string.pattern.base": "Full name cannot start or end with a whitespace."
       }),
-    })
-    const { error } = schema.validate(req.body);
-
-    if (error) {
-        return res.status(400).json({
-            message: error.details[0].message
-        })
-    }
-
-    next()
+    fullName:validator.string().min(3).required().pattern(new RegExp(/^[^\s].+[^\s]$/)).messages({
+        "any.required": "Fullname is required.",
+        "string.empty": "Fullname cannot be an empty string.",
+        "string.min": "Full name must be at least 3 characters long.",
+        "string.pattern.base": "Full name cannot start or end with a whitespace."
+      }),
+    email:validator.string().email().required().messages({
+        "any.required": "Email is required.",
+        "string.email": "Invalid email format.",
+      }),
+    phoneNumber:validator.string()
+    .length(11)
+    .pattern(/^\d+$/)
+    .required()
+    .messages({
+      "any.required": "Phone number is required.",
+      "string.length": "Phone number must be exactly 11 digits.",
+      "string.pattern.base": "Phone number must contain only numeric digits."
+      }),
+      
+    password:validator.string()
+    .pattern(new RegExp("^(?=.*[!@#$%^&*])(?=.*[A-Z]).{8,}$"))
+    .required()
+    .messages({
+      "any.required": "Password is required.",
+      "string.pattern.base":
+        "Password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*).",}),
+    address:validator.string().required().regex(/^[a-zA-Z0-9-,\. ]+$/).messages({
+        'string.pattern.base': 'Address can contain only alphabetic characters, numbers, spaces, or punctuations.',
+        'any.required': 'Address is required.',
+        'string.empty': 'Address cannot be empty.'
+      }),
+    newPassword:validator.string()
+    .pattern(new RegExp("^(?=.*[!@#$%^&*])(?=.*[A-Z]).{8,}$"))
+    .messages({
+      "string.pattern.base":
+        "New password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*)."
+      }),
+    existingPassword:validator.string()
+    .pattern(new RegExp("^(?=.*[!@#$%^&*])(?=.*[A-Z]).{8,}$"))
+    .messages({
+      "string.pattern.base":
+        "Existing password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*)."
+      })
 }
 
-const logInValidator = async (req, res, next) => {
-    const schema = Joi.object({
-        email: Joi.string().trim().email().messages({
-            "any.required": "Please provide your email address.",
-            "string.empty": "Email address cannot be left empty.",
-            "string.email": "Invalid email format. Please use a valid email address.",
-        }),
-        password: Joi.string().required().pattern(new RegExp("^(?=.*[!@#$%^&])(?=.*[A-Z]).{8,}$")).messages({
-            "any.required": "Please provide a password.",
-            "string.empty": "Password cannot be left empty.",
-            "string.pattern.base":
-            "Password must be at least 8 characters long and include at least one uppercase letter and one special character (!@#$%^&*).",
-        }),
-    })
-    const { error } = schema.validate(req.body);
+const midasValidator = (validateAllFields = false) => {
+  return async (req, res, next) => {
+      const keysToValidate = {};
 
-    if (error) {
-        return res.status(400).json({
-            message: error.details[0].message
-        })
-    }
+      if (validateAllFields) {
+          Object.keys(schemas).forEach((key) => {
+              keysToValidate[key] = schemas[key].required();
+          });
+      } else {
+          Object.keys(req.body).forEach((key) => {
+              if (schemas[key]) {
+                  keysToValidate[key] = schemas[key];
+              }
+          });
+      }
+      const schema = validator.object(keysToValidate);
 
-    next()
+      const { error } = schema.validate(req.body);
+
+      if (error) {
+          return res.status(400).json(error.details[0].message);
+      } else {
+          return next();
+      }
+  };
 }
 
-
-module.exports = {signUpValidator, logInValidator}
+module.exports = midasValidator
