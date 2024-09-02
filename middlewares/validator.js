@@ -23,7 +23,8 @@ const schemas = {
     email:validator.string().email().required().messages({
         "any.required": "Email is required.",
         "string.email": "Invalid email format.",
-        "string.base": "Email cannot be empty."
+        "string.base": "Email cannot be empty.",
+        "string.pattern.base": "Email cannot be empty."
       }),
     phoneNumber:validator.string()
     .length(11)
