@@ -64,7 +64,17 @@ const schemas = {
       "string.pattern.base":
         "Existing password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*).",
         "string.base": "Password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*.).",
-      })
+      }),
+    description:validator.string()
+    .pattern(/^[a-zA-Z0-9\s.,!?'"()&%$#@*-]{1,400}$/, 'store description')
+    .max(400)
+    .required()
+    .messages({
+      'string.base': 'Store description must be a string.',
+      'string.pattern.name': 'Store description can only contain letters, numbers, spaces, and common punctuation marks.',
+      'string.max': 'Store description cannot exceed 400 characters.',
+      'any.required': 'Store description is required.',
+    });
 }
 
 const midasValidator = (validateAllFields = false) => {
