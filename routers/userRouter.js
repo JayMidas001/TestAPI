@@ -15,7 +15,7 @@ router.post(`/log-in`, midasValidator(false), userLogin)
 
 router.get(`/verify/:token`, verifyEmail)
 
-router.post(`/resend-verification`, midasValidator(false),resendVerificationEmail)
+router.post(`/resend-verification`, midasValidator(false), resendVerificationEmail)
 
 router.post(`/forgot-password`, midasValidator(false), forgotPassword)
 

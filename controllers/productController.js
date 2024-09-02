@@ -7,53 +7,63 @@ const path = require('path');
 
 
 const createProduct = async (req, res) => {
-    try {
-      const { productName, itemPrice, itemDescription } = req.body;
-      if (!productName || !itemPrice || !itemDescription) {
-        return res.status(400).json({ message: "Please enter all fields." });
-      }
-      const {merchantId} = req.params
-      const merchantStore = await merchantModel.findById(merchantId);
-      if (!merchantStore) {
-        return res.status(401).json("Store is not currently online.");
-      }
-      const {categoryId} = req.params
-      const productCategory = await categoryModel.findById(categoryId);
-      if (!productCategory) {
-        return res.status(401).json("Category not found.");
-      }
-      // Upload image to cloudinary
-      const file = req.file.path
-      const image = await cloudinary.uploader.upload(file)
-  
-      // create a new product item
-      const newProduct = await productModel.create({
-            merchant: merchantId,
-            productName,
-            merchantName: merchantStore.businessName,
-            merchantDescription: merchantStore.description,
-            itemPrice, 
-            itemDescription,
-            category: categoryId,
-            productImage: image.secure_url,
-      });
-  
-      // ensure the product is added to the category under the merchant
-      merchantStore.products.push(newProduct._id);
-    productCategory.products.push(newProduct._id);
-  
-      // Save the updated restaurant with the new menu item
-      await merchantStore.save();
-      await productCategory.save();
-  
-      res.status(201).json({
-        message: "New Product created successfully.",
-        data: newProduct
-      });
-    } catch (error) {
-      res.status(404).json(error.message);
+  try {
+    const { productName, itemPrice, itemDescription } = req.body;
+    if (!productName || !itemPrice || !itemDescription) {
+      return res.status(400).json({ message: "Please enter all fields." });
     }
-  };
+    
+    const { merchantId, categoryId } = req.params;
+    
+    const merchantStore = await merchantModel.findById(merchantId);
+    if (!merchantStore) {
+      return res.status(401).json("Store is not currently online.");
+    }
+    
+    const productCategory = await categoryModel.findById(categoryId);
+    if (!productCategory) {
+      return res.status(401).json("Category not found.");
+    }
+    
+    // Upload image to Cloudinary
+    const file = req.file.path;
+    const image = await cloudinary.uploader.upload(file);
+    
+    // Delete the uploaded file locally after uploading to Cloudinary
+    fs.unlink(file, (err) => {
+      if (err) {
+        console.error("Failed to delete the file locally:", err);
+      }
+    });
+    
+    // Create a new product item
+    const newProduct = await productModel.create({
+      merchant: merchantId,
+      productName,
+      merchantName: merchantStore.businessName,
+      merchantDescription: merchantStore.description,
+      itemPrice,
+      itemDescription,
+      category: categoryId,
+      productImage: image.secure_url,
+    });
+    
+    // Ensure the product is added to the category under the merchant
+    merchantStore.products.push(newProduct._id);
+    productCategory.products.push(newProduct._id);
+    
+    // Save the updated merchant and category with the new product
+    await merchantStore.save();
+    await productCategory.save();
+    
+    res.status(201).json({
+      message: "New Product created successfully.",
+      data: newProduct,
+    });
+  } catch (error) {
+    res.status(404).json(error.message);
+  }
+};
   
 
   const getOneProduct = async (req, res)=>{
