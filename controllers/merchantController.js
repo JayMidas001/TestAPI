@@ -324,9 +324,9 @@ const changePassword = async (req, res) => {
 const updateMerchant = async (req, res) => {
     try {
         const { merchantId } = req.params;
-        const {businessName, email, password, phoneNumber, address, description} = req.body;
+        const {businessName, email, phoneNumber, address, description} = req.body;
 
-        const merchant = await merchantModel.findById(merchantId);
+        const merchant = await merchModel.findById(merchantId);
         if (!merchant) {
             return res.status(404).json(`Product not found.`);
         }
@@ -335,7 +335,7 @@ const updateMerchant = async (req, res) => {
             businessName: businessName || merchant.businessName,
             email: email || merchant.email,
             phoneNumber: phoneNumber || merchant.phoneNumber,
-            email: email || merchant.email,
+            address: address || merchant.address,
             description: description || merchant.description,
             profileImage: merchant.profileImage,
         };

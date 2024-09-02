@@ -19,7 +19,7 @@ router.post(`/merchant-changepassword/:token`, midasValidator(false), changePass
 
 router.post(`/merchant-reset-password/:token`, midasValidator(false), resetPassword)
 
-router.put('/merchant-updateinfo', midasValidator(false), upload.single('profileImage'), updateMerchant)
+router.put('/merchant-updateinfo/:merchantId', midasValidator(false), upload.single('profileImage'), updateMerchant)
 
 router.get(`/merchant-getone/:userId`, getOneUser)
 
