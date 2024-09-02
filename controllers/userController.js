@@ -103,9 +103,7 @@ const verifyEmail = async (req, res) => {
 const userLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const existingUser = await userModel.findOne({
-            email
-        });
+        const existingUser = await userModel.findOne({email});
         if (!existingUser) {
             return res.status(404).json({
                 message: "User not found."}); }
@@ -313,7 +311,35 @@ const changePassword = async (req, res) => {
     }
 };
 
+const makeAdmin = async(req, res)=> {
+    try {
+        const {userId} = req.params
+        const user = await userModel.findById(userId)
+        if(!user){
+            return res.status(404).json(`User with ID: ${userId} was not found`)
+        }
+        user.isAdmin = true
+        await user.save()
+        res.status(200).json({message: `Dear ${user.fullName}, you're now an admin`, data: user})
+    } catch (error) {
+        res.status(500).json(error.message)
+    }
+}
 
+const makeSuperAdmin = async(req, res)=> {
+    try {
+        const {userId} = req.params
+        const user = await userModel.findById(userId)
+        if(!user){
+            return res.status(404).json(`User with ID ${userId} was not found`)
+        }
+        user.isSuperAdmin = true
+        await user.save()
+        res.status(200).json({message: `Dear ${user.fullName}, you're now a Super Admin`, data: user})
+    } catch (error) {
+        res.status(500).json(error.message)
+    }
+}
 
 const getOneUser = async (req, res) => {
     try {
@@ -380,5 +406,5 @@ const userLogOut = async (req, res) => {
 }
 
 module.exports ={
-    userSignUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, getOneUser, getAllUsers, userLogOut
+    userSignUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, makeAdmin, makeSuperAdmin, getOneUser, getAllUsers, userLogOut
 }
