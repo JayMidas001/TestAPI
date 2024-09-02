@@ -19,8 +19,7 @@ const signUp = async (req, res) => {
     try {
 
         const { businessName, email, password, phoneNumber, address, description } = req.body;
-        const file = req.file.path
-        const image = await cloudinary.uploader.upload(file)
+        
         if(!businessName || !email || !password || !phoneNumber || !address || !description){
             return res.status(400).json(`Please enter all fields.`)
         }
@@ -39,8 +38,7 @@ const signUp = async (req, res) => {
                 password: hashedPassword,
                 phoneNumber, 
                 address,
-                description,
-                profileImage: image.secure_url
+                description
             });
 
             const userToken = jwt.sign(
