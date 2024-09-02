@@ -12,17 +12,15 @@ router.post(`/log-in`, midasValidator(false), userLogin)
 
 router.get(`/verify/:token`, verifyEmail)
 
-router.post(`/resend-verification`, resendVerificationEmail)
+router.post(`/resend-verification`, midasValidator(false),resendVerificationEmail)
 
-router.post(`/forgot-password`, forgotPassword)
+router.post(`/forgot-password`, midasValidator(false), forgotPassword)
 
 router.post(`/change-password/:token`, midasValidator(false), changePassword)
 
 router.post(`/reset-password/:token`, resetPassword)
 
 router.get(`/getone/:userId`, getOneUser)
-
-router.get(`/make-admin/:userId`, makeAdmin)
 
 router.post(`/log-out`, userLogOut)
 

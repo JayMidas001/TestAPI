@@ -10,13 +10,13 @@ router.post(`/merchant-login`, midasValidator(false), userLogin)
 
 router.get(`/merchant-verify/:token`, verifyEmail)
 
-router.post(`/merchant-resendverification`, resendVerificationEmail)
+router.post(`/merchant-resendverification`, midasValidator(false), resendVerificationEmail)
 
-router.post(`/merchant-forgotpassword`, forgotPassword)
+router.post(`/merchant-forgotpassword`, midasValidator(false), forgotPassword)
 
 router.post(`/merchant-changepassword/:token`, midasValidator(false), changePassword)
 
-router.post(`/merchant-reset-password/:token`, resetPassword)
+router.post(`/merchant-reset-password/:token`, midasValidator(false), resetPassword)
 
 router.get(`/merchant-getone/:userId`, getOneUser)
 

@@ -320,21 +320,6 @@ const changePassword = async (req, res) => {
     }
 };
 
-const makeAdmin = async(req, res)=> {
-    try {
-        const {userId} = req.params
-        const user = await merchModel.findById(userId)
-        if(!user){
-            return res.status(404).json(`User with ID ${userId} was not found`)
-        }
-        user.isAdmin = true
-        await user.save()
-        res.status(200).json({message: `Dear ${user.firstName}, you're now an admin`, data: user})
-    } catch (error) {
-        res.status(500).json(error.message)
-    }
-}
-
 
 const getOneUser = async (req, res) => {
     try {
@@ -388,5 +373,5 @@ const userLogOut = async (req, res) => {
 
 
 module.exports ={
-    signUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, makeAdmin, getOneUser, userLogOut
+    signUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, getOneUser, userLogOut
 }
