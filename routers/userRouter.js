@@ -1,6 +1,8 @@
 const express = require('express')
+const {authorize, isSuperAdmin} = require(`../middlewares/Auth`)
 const {
-    userSignUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, makeAdmin, getOneUser, userLogOut
+    userSignUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, makeAdmin, getOneUser, userLogOut,
+    getAllUsers
 } = require('../controllers/userController')
 const midasValidator = require('../middlewares/validator')
 
@@ -21,6 +23,8 @@ router.post(`/change-password/:token`, midasValidator(false), changePassword)
 router.post(`/reset-password/:token`, resetPassword)
 
 router.get(`/getone/:userId`, getOneUser)
+
+router.get(`/getallusers`, isSuperAdmin, getAllUsers)
 
 router.post(`/log-out`, userLogOut)
 

@@ -321,6 +321,46 @@ const changePassword = async (req, res) => {
 };
 
 
+const updateMerchant = async (req, res) => {
+    try {
+        const { merchantId } = req.params;
+        const {businessName, email, password, phoneNumber, address, description} = req.body;
+
+        const merchant = await merchantModel.findById(merchantId);
+        if (!merchant) {
+            return res.status(404).json(`Product not found.`);
+        }
+
+        const data = {
+            businessName: businessName || merchant.businessName,
+            email: email || merchant.email,
+            phoneNumber: phoneNumber || merchant.phoneNumber,
+            email: email || merchant.email,
+            description: description || merchant.description,
+            profileImage: merchant.profileImage,
+        };
+
+        if (req.file) {
+            const imagePublicId = merchant.profileImage.split(`/`).pop().split(`.`)[0];
+            await cloudinary.uploader.destroy(imagePublicId);  // Destroy old image
+            const file = req.file
+            const image = await cloudinary.uploader.upload(file.path)
+            //const updateResponse = await cloudinary.uploader.upload(productImage); 
+            data.productImage = image.secure_url;  // Update data with new image URL
+        }
+
+        const updatedMerchant = await merchModel.findByIdAndUpdate(merchantId, data, { new: true });
+
+        res.status(200).json({
+            message: 'Merchant profile info updated successfully.',
+            data: updatedMerchant,
+        });
+    } catch (error) {
+        res.status(500).json(error.message);
+    }
+};
+
+
 const getOneUser = async (req, res) => {
     try {
         const {userId} = req.params
@@ -333,6 +373,20 @@ const getOneUser = async (req, res) => {
             message: `Business found.`,
             data: user
         })
+    } catch (error) {
+        res.status(500).json(error.message)
+    }
+}
+
+const getAllMerchants = async(req,res)=>{
+    try {
+     const users = await merchModel.find()
+     if(users.length <= 0){
+        return res.status(404).json(`No available merchants.`)
+     }else{
+        res.status(200).json({message:`Kindly find the ${users.length} registered merchants below`, data: users})
+     }
+        
     } catch (error) {
         res.status(500).json(error.message)
     }
@@ -373,5 +427,5 @@ const userLogOut = async (req, res) => {
 
 
 module.exports ={
-    signUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, getOneUser, userLogOut
+    signUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, updateMerchant, getOneUser, getAllMerchants, userLogOut
 }

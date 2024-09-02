@@ -23,8 +23,8 @@ const createProduct = async (req, res) => {
         return res.status(401).json("Category not found.");
       }
       // Upload image to cloudinary
-      const file = req.file
-      const image = await cloudinary.uploader.upload(file.path)
+      const file = req.file.path
+      const image = await cloudinary.uploader.upload(file)
   
       // create a new product item
       const newProduct = await productModel.create({

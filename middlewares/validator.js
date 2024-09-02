@@ -23,6 +23,7 @@ const schemas = {
     email:validator.string().email().required().messages({
         "any.required": "Email is required.",
         "string.email": "Invalid email format.",
+        "string.base": "Email cannot be empty."
       }),
     phoneNumber:validator.string()
     .length(11)
@@ -31,7 +32,8 @@ const schemas = {
     .messages({
       "any.required": "Phone number is required.",
       "string.length": "Phone number must be exactly 11 digits.",
-      "string.pattern.base": "Phone number must contain only numeric digits."
+      "string.pattern.base": "Phone number must contain only numeric digits.",
+      "string.base": "Phone number cannot be empty."
       }),
       
     password:validator.string()
@@ -41,23 +43,26 @@ const schemas = {
       "any.required": "Password is required.",
       "string.base": "Password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*.).",
       "string.pattern.base":
-        "Password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*.).",}),
+      "Password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*.).",}),
     address:validator.string().required().regex(/^[a-zA-Z0-9-,\. ]+$/).messages({
         'string.pattern.base': 'Address can contain only alphabetic characters, numbers, spaces, or punctuations.',
         'any.required': 'Address is required.',
-        'string.empty': 'Address cannot be empty.'
+        'string.empty': 'Address cannot be empty.',
+        "string.base": "Address cannot be empty."
       }),
     newPassword:validator.string()
     .pattern(new RegExp("^(?=.*[!@#$%^&*])(?=.*[A-Z]).{8,}$"))
     .messages({
       "string.pattern.base":
-        "New password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*)."
+        "New password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*).",
+        "string.base": "Password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*.).",
       }),
     existingPassword:validator.string()
     .pattern(new RegExp("^(?=.*[!@#$%^&*])(?=.*[A-Z]).{8,}$"))
     .messages({
       "string.pattern.base":
-        "Existing password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*)."
+        "Existing password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*).",
+        "string.base": "Password must contain at least 8 characters, one capital letter, and one special character (!@#$%^&*.).",
       })
 }
 

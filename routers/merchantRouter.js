@@ -1,6 +1,7 @@
 const express = require('express')
 const upload = require("../utils/multer")
-const { signUp, userLogin, verifyEmail, resendVerificationEmail, forgotPassword, changePassword, resetPassword, getOneUser, makeAdmin, userLogOut } = require('../controllers/merchantController')
+const { authorize, isSuperAdmin} = require(`../middlewares/Auth`)
+const { signUp, userLogin, verifyEmail, resendVerificationEmail, forgotPassword, changePassword, resetPassword, getOneUser, makeAdmin, userLogOut, getAllMerchants, updateMerchant } = require('../controllers/merchantController')
 const midasValidator = require('../middlewares/validator')
 const router = express.Router()
 
@@ -18,7 +19,11 @@ router.post(`/merchant-changepassword/:token`, midasValidator(false), changePass
 
 router.post(`/merchant-reset-password/:token`, midasValidator(false), resetPassword)
 
+router.put('/merchant-updateinfo', midasValidator(false), upload.single('profileImage'), updateMerchant)
+
 router.get(`/merchant-getone/:userId`, getOneUser)
+
+router.get(`/merchant-getall`, isSuperAdmin, getAllMerchants)
 
 router.post(`/merchant-logout`, userLogOut)
 

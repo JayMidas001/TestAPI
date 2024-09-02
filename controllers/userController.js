@@ -332,7 +332,19 @@ const getOneUser = async (req, res) => {
     }
 }
 
-
+const getAllUsers = async(req,res)=>{
+    try {
+     const users = await userModel.find()
+     if(users.length <= 0){
+        return res.status(404).json(`No available users`)
+     }else{
+        res.status(200).json({message:`Kindly find the ${users.length} registered users below`, data: users})
+     }
+        
+    } catch (error) {
+        res.status(500).json(error.message)
+    }
+}
 
 const userLogOut = async (req, res) => {
     try {
@@ -368,5 +380,5 @@ const userLogOut = async (req, res) => {
 }
 
 module.exports ={
-    userSignUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, getOneUser, userLogOut
+    userSignUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, getOneUser, getAllUsers, userLogOut
 }
