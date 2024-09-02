@@ -338,8 +338,8 @@ const updateMerchant = async (req, res) => {
         };
 
         if (req.file) {
-            const imagePublicId = merchant.profileImage.split(`/`).pop().split(`.`)[0];
-            await cloudinary.uploader.destroy(imagePublicId);  // Destroy old image
+            // const imagePublicId = merchant.profileImage.split(`/`).pop().split(`.`)[0];
+            // await cloudinary.uploader.destroy(imagePublicId);  // Destroy old image
             const file = req.file
             const image = await cloudinary.uploader.upload(file.path)
             //const updateResponse = await cloudinary.uploader.upload(productImage); 
