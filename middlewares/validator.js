@@ -74,7 +74,7 @@ const schemas = {
       'string.pattern.name': 'Store description can only contain letters, numbers, spaces, and common punctuation marks.',
       'string.max': 'Store description cannot exceed 400 characters.',
       'any.required': 'Store description is required.',
-    });
+    })
 }
 
 const midasValidator = (validateAllFields = false) => {
