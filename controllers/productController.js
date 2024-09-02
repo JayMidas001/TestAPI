@@ -32,7 +32,7 @@ const createProduct = async (req, res) => {
     // Delete the uploaded file locally after uploading to Cloudinary
     fs.unlink(file, (err) => {
       if (err) {
-        console.error("Failed to delete the file locally:", err);
+        console.log("Failed to delete the file locally:", err);
       }
     });
     

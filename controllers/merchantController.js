@@ -15,7 +15,6 @@ const {
 
 
 
-
 const signUp = async (req, res) => {
     try {
 
@@ -349,6 +348,11 @@ const updateMerchant = async (req, res) => {
             data.productImage = image.secure_url;  // Update data with new image URL
         }
 
+        fs.unlink(file, (err) => {
+            if (err) {
+              console.log("Failed to delete the file locally:", err);
+            }
+          });
         const updatedMerchant = await merchModel.findByIdAndUpdate(merchantId, data, { new: true });
 
         res.status(200).json({
