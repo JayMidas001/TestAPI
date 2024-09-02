@@ -32,7 +32,8 @@ const mSchema = new mongoose.Schema({
         type:String
     },
     isAdmin:{
-        type:String
+        type:String,
+        default: true
     },
     categories:[{
         type: mongoose.Schema.Types.ObjectId,

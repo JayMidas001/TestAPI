@@ -46,12 +46,12 @@ const userSignUp = async (req, res) => {
     
             await user.save();
             await sendMail({
-                subject: `Kindly Verify your mail`,
+                subject: `Email Verification`,
                 email: user.email,
                 html: signUpTemplate(verifyLink, user.fullName),
             });
             res.status(201).json({
-                message: `Welcome ${user.fullName} kindly check your gmail to access the link to verify your email`,
+                message: `Welcome ${user.fullName}, kindly check your gmail to access the link to verify your email`,
                 data: user,
             });
         }

@@ -51,12 +51,11 @@ const signUp = async (req, res) => {
             );
             const verifyLink = `${req.protocol}://${req.get(
                 "host"
-            )}/api/v1/verify/${userToken}`;
-            
+            )}/api/v1/merchant-verify/${userToken}`;
             
             await user.save();
             await sendMail({
-                subject: `Kindly Verify your mail`,
+                subject: `Email Verification`,
                 email: user.email,
                 html: signUpTemplate(verifyLink, user.businessName),
             });

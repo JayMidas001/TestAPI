@@ -3,10 +3,10 @@ const validator = require('@hapi/joi')
 const schemas = {
     
     businessName:validator.string().min(3).required().pattern(new RegExp(/^[^\s].+[^\s]$/)).messages({
-        "any.required": "Fullname is required.",
-        "string.empty": "Fullname cannot be an empty string.",
-        "string.min": "Full name must be at least 3 characters long.",
-        "string.pattern.base": "Full name cannot start or end with a whitespace."
+        "any.required": "Business name is required.",
+        "string.empty": "Business name cannot be an empty string.",
+        "string.min": "Business name must be at least 3 characters long.",
+        "string.pattern.base": "Business name cannot start or end with a whitespace."
       }),
     fullName:validator.string().min(3).required().pattern(new RegExp(/^[^\s].+[^\s]$/)).messages({
         "any.required": "Fullname is required.",
