@@ -1,6 +1,6 @@
 const merchModel = require(`../models/merchantModel.js`)
 const bcrypt = require(`bcrypt`)
-const cloudinary = require(`cloudinary`)
+const cloudinary = require(`../utils/cloudinary.js`)
 const jwt = require(`jsonwebtoken`)
 const fs = require(`fs`)
 const path = require('path')
@@ -107,6 +107,9 @@ const verifyEmail = async (req, res) => {
 const userLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
+        if( !email || !password ){
+            return res.status(400).json(`Please enter all fields (email & pasword).`)
+        }
         const existingUser = await merchModel.findOne({
             email
         });
@@ -320,42 +323,51 @@ const changePassword = async (req, res) => {
 
 const updateMerchant = async (req, res) => {
     try {
-        const { merchantId } = req.params;
-        const {businessName, email, phoneNumber, address, description} = req.body;
-
-        const merchant = await merchModel.findById(merchantId);
-        if (!merchant) {
-            return res.status(404).json(`Product not found.`);
-        }
-
-        const data = {
-            businessName: businessName || merchant.businessName,
-            email: email || merchant.email,
-            phoneNumber: phoneNumber || merchant.phoneNumber,
-            address: address || merchant.address,
-            description: description || merchant.description,
-            profileImage: merchant.profileImage,
-        };
-
-        if (req.file) {
-            // const imagePublicId = merchant.profileImage.split(`/`).pop().split(`.`)[0];
-            // await cloudinary.uploader.destroy(imagePublicId);  // Destroy old image
-            const file = req.file
-            const image = await cloudinary.uploader.upload(file.path)
-            //const updateResponse = await cloudinary.uploader.upload(productImage); 
-            data.productImage = image.secure_url;  // Update data with new image URL
-        }
-
-        const updatedMerchant = await merchModel.findByIdAndUpdate(merchantId, data, { new: true });
-
-        res.status(200).json({
-            message: 'Merchant profile info updated successfully.',
-            data: updatedMerchant,
+      const { merchantId } = req.params;
+      const { businessName, email, phoneNumber, address, description } = req.body;
+      const file = req.files.profileImage;
+  
+      const merchant = await merchModel.findById(merchantId);
+      if (!merchant) {
+        return res.status(404).json("Merchant not found.");
+      }
+  
+      const data = {
+        businessName: businessName || merchant.businessName,
+        email: email || merchant.email,
+        phoneNumber: phoneNumber || merchant.phoneNumber,
+        address: address || merchant.address,
+        description: description || merchant.description,
+        profileImage: merchant.profileImage,
+      };
+  
+      if (file) {
+        const imagePublicId = merchant.profileImage.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(imagePublicId);
+  
+        const image = await cloudinary.uploader.upload(file.tempFilePath);
+        data.profileImage = image.secure_url;
+  
+        fs.unlink(file.tempFilePath, (err) => {
+          if (err) {
+            console.error("Failed to delete the file locally:", err);
+          } else {
+            console.log("File deleted locally after upload");
+          }
         });
+      }
+  
+      const updatedMerchant = await merchModel.findByIdAndUpdate(merchantId, data, { new: true });
+      res.status(200).json({
+        message: 'Merchant profile info updated successfully.',
+        data: updatedMerchant,
+      });
     } catch (error) {
-        res.status(500).json(error.message);
+      res.status(500).json(error.message);
     }
-};
+  };
+
+
 
 
 const getOneUser = async (req, res) => {

@@ -103,6 +103,9 @@ const verifyEmail = async (req, res) => {
 const userLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
+        if( !email || !password ){
+            return res.status(400).json(`Please enter all fields (email & pasword).`)
+        }
         const existingUser = await userModel.findOne({email});
         if (!existingUser) {
             return res.status(404).json({

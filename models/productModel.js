@@ -5,13 +5,19 @@ const productSchema = new mongoose.Schema({
         type: String,
         require: true
     },
+    productPrice:{
+        type: String,
+        require: true
+    },
     productDescription:{
         type: String,
         require: true
     },
     productImage:{
         type: String,
-        require: true
+    },
+    productCategory:{
+        type: String,
     },
     merchant:[{
         type: mongoose.Schema.Types.ObjectId,

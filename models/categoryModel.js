@@ -10,19 +10,14 @@ const categorySchema = new mongoose.Schema({
         require: true
     },
     categoryImage:{
-        type: String,
-        require: true
+        type: String
     },
-    merchant:[{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Merchant"
-    }],
     products:[{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product"
     }]
 }, {timestamps:true})
 
-const productModel = mongoose.model(`Category`, categorySchema)
+const categoryModel = mongoose.model(`Category`, categorySchema)
 
-module.exports = productModel
+module.exports = categoryModel

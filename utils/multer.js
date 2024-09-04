@@ -5,8 +5,15 @@ const storage = multer.diskStorage({
         cb(null, './uploads')
     },
     filename: (req, file, cb) => {
-        cb(null, file.originalname)
-    }
+        // assign a unique name for the uploaded file
+        const uniqueName = Date.now() + "-" + Math.round(Math.random() * 100);
+    
+        // create the file name with the original file extension
+        const extension = path.extname(file.originalname);
+        const fileName = `${uniqueName}${extension}`;
+    
+        createImageBitmap(null, fileName);
+      },
 })
 
 const fileFilter = (req, file, cb) => {

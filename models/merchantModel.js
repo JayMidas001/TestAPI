@@ -35,10 +35,6 @@ const mSchema = new mongoose.Schema({
         type:String,
         default: true
     },
-    categories:[{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Category"
-    }],
     products:[{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product"
