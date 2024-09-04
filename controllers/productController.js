@@ -57,9 +57,10 @@ const createProduct = async (req, res) => {
       data: newProduct,
     });
   } catch (error) {
-    res.status(404).json(error.message);
+    res.status(500).json(error.message);
   }
-};  
+}; 
+
 // Get a single product by ID
 const getOneProduct = async (req, res) => {
   try {
@@ -74,6 +75,15 @@ const getOneProduct = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json(error.message);
+  }finally {
+    // Always attempt to delete the temp file after upload
+    if (req.files?.productImage?.tempFilePath) {
+      fs.unlink(req.files.productImage.tempFilePath, (err) => {
+        if (err) {
+          console.log("Failed to delete the file locally:", err);
+        }
+      });
+    }
   }
 };
 
@@ -97,7 +107,7 @@ const getAllForOneStore = async (req, res) => {
 // Get all products
 const getAllProducts = async (req, res) => {
   try {
-    const products = await productModel.find().populate('categories');
+    const products = await productModel.find()
     if (products.length === 0) {
       return res.status(404).json("No products found.");
     }
@@ -164,7 +174,7 @@ const deleteProduct = async (req, res) => {
 
     res.status(200).json({ message: "Product deleted successfully." });
   } catch (error) {
-    res.status(404).json(error.message);
+    res.status(500).json(error.message);
   }
 };
 module.exports = {

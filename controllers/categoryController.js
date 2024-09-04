@@ -43,7 +43,16 @@ const createCategory = async (req, res) => {
         res.status(500).json({
             message: error.message
         });
-    }
+    } finally {
+        // Always attempt to delete the temp file after upload
+        if (req.files?.productImage?.tempFilePath) {
+          fs.unlink(req.files.categoryImage.tempFilePath, (err) => {
+            if (err) {
+              console.log("Failed to delete the file locally:", err);
+            }
+          });
+        }
+      }
 };
 
 
@@ -117,7 +126,16 @@ const updateCategory = async (req, res) => {
       res.status(200).json({ message: "Category updated successfully", data: updatedCategory });
     } catch (error) {
       res.status(500).json({ message: error.message });
-    }
+    } finally {
+        // Always attempt to delete the temp file after upload
+        if (req.files?.productImage?.tempFilePath) {
+          fs.unlink(req.files.categoryImage.tempFilePath, (err) => {
+            if (err) {
+              console.log("Failed to delete the file locally:", err);
+            }
+          });
+        }
+      }
   };
   
 

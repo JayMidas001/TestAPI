@@ -9,6 +9,7 @@ const productRouter = require("./routers/productRouter")
 const merchantRouter = require("./routers/merchantRouter")
 const fileUploader = require(`express-fileupload`);
 const categoryRouter = require("./routers/categoryRouter");
+const cartRouter = require("./routers/cartRouter");
 
 const app = express()
 app.use(bodyParser.json({limit: '100mb'}))
@@ -24,7 +25,7 @@ app.use(`/api/v1`, userRouter)
 app.use(`/api/v1`, merchantRouter)
 app.use(`/api/v1`, productRouter)
 app.use(`/api/v1`, categoryRouter)
-
+app.use(`/api/v1`, cartRouter)
 
 app.get(`/`, (req, res)=>{
     res.send(`Welcome to Groceria!`)

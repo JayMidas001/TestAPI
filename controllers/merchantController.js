@@ -176,7 +176,7 @@ const resendVerificationEmail = async (req, res) => {
         )}/api/v1/verify/${token}`;
         let mailOptions = {
             email: user.email,
-            subject: "Verification email",
+            subject: "Email Verification",
             html: verifyTemplate(verifyLink, user.businessName),
         };
         // Send the the email
