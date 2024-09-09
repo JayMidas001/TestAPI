@@ -1,5 +1,5 @@
 {
-    "name": "Groceria",
+    "name": "groceria-backend-application",
     "builds": [
       {
         "src": "server.js",
