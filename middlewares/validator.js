@@ -22,7 +22,7 @@ const schemas = {
         "string.base": "Full name cannot be empty."
       }),
     customerFirstName: validator.string()
-    .min(6)
+    .min(3)
     .custom(value => value.trim())  // Trim leading and trailing whitespace
     .pattern(new RegExp("^[A-Za-z]+$"))  // Ensure only alphabetic characters are allowed
     .required()
@@ -34,7 +34,7 @@ const schemas = {
       "string.base": "First name cannot be empty."
     }),
     customerLastName: validator.string()
-    .min(6)
+    .min(3)
     .custom(value => value.trim())  // Trim leading and trailing whitespace
     .pattern(new RegExp("^[A-Za-z]+$"))  // Ensure only alphabetic characters are allowed
     .required()
@@ -61,7 +61,16 @@ const schemas = {
       "string.pattern.base": "Phone number must contain only numeric digits.",
       "string.base": "Phone number cannot be empty."
       }),
-      
+    customerPhoneNumber:validator.string()
+    .length(11)
+    .pattern(/^\d+$/)
+    .required()
+    .messages({
+      "any.required": "Phone number is required.",
+      "string.length": "Phone number must be exactly 11 digits.",
+      "string.pattern.base": "Phone number must contain only numeric digits.",
+      "string.base": "Phone number cannot be empty."
+      }),
     password:validator.string()
     .pattern(new RegExp("^(?=.*[!@#$%^&*.])(?=.*[A-Z]).{8,}$"))
     .required()

@@ -113,7 +113,7 @@ const viewCart = async (req, res) => {
 // Remove an item from the cart (works for both guests and authenticated users)
 const removeItemFromCart = async (req, res) => {
     try {
-        const { productId } = req.params;
+        const { productId } = req.body;
         const userId = req.user ? req.user._id : null;
 
         let cart;
@@ -161,7 +161,7 @@ const removeItemFromCart = async (req, res) => {
 
 const reduceItemQty = async (req, res) => {
     try {
-        const { productId } = req.params;
+        const { productId } = req.body;
         const userId = req.user ? req.user._id : null;
 
         let cart;

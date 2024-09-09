@@ -162,7 +162,7 @@ const confirmOrder = async (req, res) => {
             customerFirstName: customerFirstName,
             customerLastName: customerLastName,
             customerAddress: customerAddress,
-            customerPhonenumber: customerPhoneNumber,
+            customerPhoneNumber: customerPhoneNumber,
             city: city,
             country: country || 'Nigeria',
             orderStatus: 'Processing',
