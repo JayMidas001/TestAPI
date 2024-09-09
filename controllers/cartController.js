@@ -3,6 +3,7 @@ const productModel = require('../models/productModel');
 const session = require(`express-session`)
 
 // Utility function to initialize or retrieve a session-based cart
+// Function to get or create session-based cart for guest users
 const getSessionCart = (req) => {
     if (!req.session.cart) {
         req.session.cart = {
@@ -13,7 +14,6 @@ const getSessionCart = (req) => {
     return req.session.cart;
 };
 
-// Add an item to the cart (works for both guests and authenticated users)
 const addToCart = async (req, res) => {
     try {
         const { productId, quantity } = req.body;
@@ -34,15 +34,6 @@ const addToCart = async (req, res) => {
             }
         } else {
             // Guest user: use session-based cart
-            const getSessionCart = (req) => {
-              if (!req.session.cart) {
-                  req.session.cart = {
-                      items: [],
-                      totalPrice: 0
-                  };
-              }
-              return req.session.cart;
-          };
             cart = getSessionCart(req);
         }
 
@@ -55,12 +46,12 @@ const addToCart = async (req, res) => {
         } else {
             // If the product doesn't exist, add it to the cart
             cart.items.push({
-              product: productId,
-              productName: product.productName,
-              quantity,
-              price: product.productPrice,
-              productImage: product.productImage,
-              merchant: product.merchant
+                product: productId,
+                productName: product.productName,
+                quantity,
+                price: product.productPrice,
+                productImage: product.productImage,
+                merchant: product.merchant
             });
         }
 
@@ -73,6 +64,18 @@ const addToCart = async (req, res) => {
         } else {
             // Update session-based cart for guests
             req.session.cart = cart;
+
+            // Ensure session is saved after modification
+            req.session.save((err) => {
+                if (err) {
+                    return res.status(500).json({ message: "Failed to save session." });
+                }
+                res.status(200).json({
+                    message: "Item added to cart successfully",
+                    data: cart
+                });
+            });
+            return;
         }
 
         res.status(200).json({
