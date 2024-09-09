@@ -1,4 +1,5 @@
 const merchModel = require(`../models/merchantModel.js`)
+const orderModel = require(`../models/orderModel.js`)
 const bcrypt = require(`bcrypt`)
 const cloudinary = require(`../utils/cloudinary.js`)
 const jwt = require(`jsonwebtoken`)
@@ -57,7 +58,7 @@ const signUp = async (req, res) => {
                 html: signUpTemplate(verifyLink, user.businessName),
             });
             res.status(201).json({
-                message: `Welcome ${user.businessName} kindly check your gmail to access the link to verify your email`,
+                message: `Welcome, ${user.businessName}, kindly check your mail to access the link to verify your email`,
                 data: user,
             });
         }
@@ -370,17 +371,17 @@ const updateMerchant = async (req, res) => {
 
 
 
-const getOneUser = async (req, res) => {
+const getOneMerchant = async (req, res) => {
     try {
-        const {userId} = req.params
+        const {merchantId} = req.params
 
-        const user = await merchModel.findById(userId)
-        if(!user){
+        const merchant = await merchModel.findById(merchantId)
+        if(!merchant){
             return res.status(404).json(`Business not found.`)
         }
         res.status(200).json({
             message: `Business found.`,
-            data: user
+            data: merchant
         })
     } catch (error) {
         res.status(500).json(error.message)
@@ -389,11 +390,13 @@ const getOneUser = async (req, res) => {
 
 const getAllMerchants = async(req,res)=>{
     try {
-     const users = await merchModel.find()
-     if(users.length <= 0){
+        /// find all merchants from the DB
+     const merchants = await merchModel.find()
+
+     if(merchants.length <= 0){
         return res.status(404).json(`No available merchants.`)
      }else{
-        res.status(200).json({message:`Kindly find the ${users.length} registered merchants below`, data: users})
+        res.status(200).json({message:`Kindly find the ${merchants.length} registered merchants below`, data: merchants})
      }
         
     } catch (error) {
@@ -401,7 +404,7 @@ const getAllMerchants = async(req,res)=>{
     }
 }
 
-const userLogOut = async (req, res) => {
+const merchantLogOut = async (req, res) => {
     try {
         const auth = req.headers.authorization;
         const token = auth.split(' ')[1];
@@ -411,18 +414,18 @@ const userLogOut = async (req, res) => {
                 message: 'invalid token'
             })
         }
-        // Verify the user's token and extract the user's email from the token
+        // Verify the merchant's token and extract the merchant's email from the token
         const { email } = jwt.verify(token, process.env.jwt_secret);
-        // Find the user by ID
-        const user = await merchModel.findOne({ email });
-        if (!user) {
+        // Find the merchant by ID
+        const merchant = await merchModel.findOne({ email });
+        if (!merchant) {
             return res.status(404).json({
                 message: "User not found"
             });
         }
-        user.blackList.push(token);
+        merchant.blackList.push(token);
         // Save the changes to the database
-        await user.save();
+        await merchant.save();
         //   Send a success response
         res.status(200).json({
             message: "User logged out successfully."
@@ -436,5 +439,5 @@ const userLogOut = async (req, res) => {
 
 
 module.exports ={
-    signUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, updateMerchant, getOneUser, getAllMerchants, userLogOut
+    signUp, verifyEmail, resendVerificationEmail, userLogin, resetPassword, forgotPassword, changePassword, updateMerchant, getOneMerchant, getAllMerchants, merchantLogOut
 }

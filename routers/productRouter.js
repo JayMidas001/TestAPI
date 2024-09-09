@@ -1,9 +1,9 @@
 const express = require(`express`)
-const { authorize, isSuperAdmin} = require(`../middlewares/Auth`)
-const { createProduct, getOneProduct, getAllForOneStore, getAllProducts, updateProduct, deleteProduct } = require("../controllers/productController")
+const { authorize, authenticate} = require(`../middlewares/Auth`)
+const { createProduct, getOneProduct, getAllForOneStore, getAllProducts, updateProduct, deleteProduct, searchProducts, saveProductForLater } = require("../controllers/productController")
 const router = express.Router()
 
-router.post(`/:merchantId/create-product/:categoryId`, createProduct)
+router.post(`/:merchantId/create-product/:categoryId`, authorize, createProduct)
 
 router.get(`/getoneproduct/:productId`, getOneProduct)
 
@@ -11,7 +11,11 @@ router.get(`/allstoreproducts/:merchantId`, getAllForOneStore)
 
 router.get(`/allproducts`, getAllProducts)
 
-router.put(`/:merchantId/update-product/:productId`, updateProduct)
+router.put(`/:merchantId/update-product/:productId`, authorize, updateProduct)
+
+router.post(`/products-search`, searchProducts)
+
+router.post(`/saveforlater`, authenticate, saveProductForLater)
 
 router.delete(`/delete-product/:productId`, authorize, deleteProduct)
 

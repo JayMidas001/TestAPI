@@ -51,7 +51,7 @@ const userSignUp = async (req, res) => {
                 html: signUpTemplate(verifyLink, user.fullName),
             });
             res.status(201).json({
-                message: `Welcome ${user.fullName}, kindly check your gmail to access the link to verify your email`,
+                message: `Welcome ${user.fullName}, kindly check your mail to access the link to verify your email`,
                 data: user,
             });
         }
@@ -128,7 +128,7 @@ const userLogin = async (req, res) => {
                 email: existingUser.email,
             },
             process.env.jwt_secret,
-            { expiresIn: "1h" }
+            { expiresIn: "3h" }
         );
 
         res.status(200).json({

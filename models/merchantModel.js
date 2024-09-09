@@ -39,9 +39,13 @@ const mSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product"
     }],
+    orders: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Order'
+    }],
     blackList:[]
 }, {timestamps: true})
 
-const merchModel = mongoose.model('Merchant', mSchema);
+const merchantModel = mongoose.model('Merchant', mSchema);
 
-module.exports = merchModel
+module.exports = merchantModel

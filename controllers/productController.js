@@ -1,6 +1,7 @@
 const merchantModel = require(`../models/merchantModel`);
 const categoryModel = require(`../models/categoryModel`);
 const productModel = require(`../models/productModel`);
+const userModel = require(`../models/userModel`)
 const cloudinary = require(`../utils/cloudinary`);
 const fs = require(`fs`);
 const path = require('path');
@@ -44,6 +45,7 @@ const createProduct = async (req, res) => {
       categories: categoryId,
       productCategory: productCategory.categoryName,
       productImage: image.secure_url,
+      email: merchantStore.email
     });
 
     merchantStore.products.push(newProduct._id);
@@ -164,11 +166,29 @@ const deleteProduct = async (req, res) => {
   try {
     const { productId } = req.params;
 
-    const product = await productModel.findByIdAndDelete(productId);
+    // Find the product to delete
+    const product = await productModel.findById(productId);
     if (!product) {
       return res.status(404).json("Product not found.");
     }
 
+    // Find the associated merchant and remove the product from their products list
+    const merchantId = product.merchant;
+    if (merchantId) {
+      const merchant = await merchantModel.findById(merchantId);
+      if (merchant) {
+        // Remove the product's ObjectId from the merchant's products array
+        merchant.products = merchant.products.filter(
+          (prodId) => prodId.toString() !== productId
+        );
+        await merchant.save(); // Save the updated merchant
+      }
+    }
+
+    // Delete the product
+    await productModel.findByIdAndDelete(productId);
+
+    // Delete the product image from Cloudinary
     const imagePublicId = product.productImage.split('/').pop().split('.')[0];
     await cloudinary.uploader.destroy(imagePublicId);
 
@@ -177,6 +197,75 @@ const deleteProduct = async (req, res) => {
     res.status(500).json(error.message);
   }
 };
+
+
+const searchProducts = async (req, res) => {
+    try {
+        const { searchTerm } = req.body;
+
+        if (!searchTerm) {
+            return res.status(400).json({ message: "Please enter a search term" });
+        }
+
+        // Find products where the productName matches the search term (case-insensitive)
+        const products = await productModel.find({
+            productName: { $regex: searchTerm, $options: 'i' }
+        });
+
+        if (products.length === 0) {
+            return res.status(404).json({ message: "No products found" });
+        }
+
+        res.status(200).json({
+            message: "Products retrieved successfully",
+            data: products
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const saveProductForLater = async (req, res) => {
+  try {
+      const {userId} = req.user
+      const productId = req.body.productId; 
+
+      // Find the user
+      const user = await userModel.findById(userId);
+
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Find the product
+      const product = await productModel.findById(productId);
+      if (!product) {
+          return res.status(404).json({ message: 'Product not found' });
+      }
+
+      // Check if the product is already saved
+      const isSaved = user.savedProducts.includes(productId);
+
+      if (isSaved) {
+          // If the product is already saved, unsave it (remove from list)
+          user.savedProducts = user.savedProducts.filter(id => id.toString() !== productId);
+      } else {
+          // If not saved, add it to the savedProducts list
+          user.savedProducts.push(productId);
+      }
+
+      // Save the updated user document
+      await user.save();
+
+      res.status(200).json({
+          message: isSaved ? 'Product removed from saved list' : 'Product saved for later',
+          savedProducts: user.savedProducts
+      });
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createProduct,
   getOneProduct,
@@ -184,158 +273,6 @@ module.exports = {
   getAllProducts,
   updateProduct,
   deleteProduct,
+  searchProducts,
+  saveProductForLater,
 };
-
-// const Product = require('../models/productModel');
-// const Category = require('../models/categoryModel');
-
-// // Create a new product
-// const createProduct = async (req, res) => {
-//     try {
-//         const { productName, productDescription, productImage, merchant, categories } = req.body;
-
-//         // Check if the categories exist
-//         const existingCategories = await Category.find({ _id: { $in: categories } });
-//         if (existingCategories.length !== categories.length) {
-//             return res.status(404).json({ message: "One or more categories not found." });
-//         }
-
-//         const newProduct = new Product({
-//             productName,
-//             productDescription,
-//             productImage,
-//             merchant,
-//             categories
-//         });
-
-//         const savedProduct = await newProduct.save();
-
-//         // Add product to each category
-//         await Category.updateMany(
-//             { _id: { $in: categories } },
-//             { $push: { products: savedProduct._id } }
-//         );
-
-//         res.status(201).json({
-//             message: "Product created successfully",
-//             data: savedProduct
-//         });
-//     } catch (error) {
-//         res.status(500).json({
-//             message: error.message
-//         });
-//     }
-// };
-
-// // Get all products
-// const getAllProducts = async (req, res) => {
-//     try {
-//         const products = await Product.find()
-//             .populate('merchant')
-//             .populate('categories');
-
-//         res.status(200).json({
-//             message: "Products retrieved successfully",
-//             data: products
-//         });
-//     } catch (error) {
-//         res.status(500).json({
-//             message: error.message
-//         });
-//     }
-// };
-
-// // Get a single product by ID
-// const getProductById = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const product = await Product.findById(id)
-//             .populate('merchant')
-//             .populate('categories');
-
-//         if (!product) {
-//             return res.status(404).json({
-//                 message: "Product not found"
-//             });
-//         }
-
-//         res.status(200).json({
-//             message: "Product retrieved successfully",
-//             data: product
-//         });
-//     } catch (error) {
-//         res.status(500).json({
-//             message: error.message
-//         });
-//     }
-// };
-
-// // Update a product by ID
-// const updateProduct = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const { categories } = req.body;
-
-//         // If categories are being updated, check if they exist
-//         if (categories) {
-//             const existingCategories = await Category.find({ _id: { $in: categories } });
-//             if (existingCategories.length !== categories.length) {
-//                 return res.status(404).json({ message: "One or more categories not found." });
-//             }
-//         }
-
-//         const updatedProduct = await Product.findByIdAndUpdate(id, req.body, { new: true });
-
-//         if (!updatedProduct) {
-//             return res.status(404).json({
-//                 message: "Product not found"
-//             });
-//         }
-
-//         res.status(200).json({
-//             message: "Product updated successfully",
-//             data: updatedProduct
-//         });
-//     } catch (error) {
-//         res.status(500).json({
-//             message: error.message
-//         });
-//     }
-// };
-
-// // Delete a product by ID
-// const deleteProduct = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-
-//         const deletedProduct = await Product.findByIdAndDelete(id);
-
-//         if (!deletedProduct) {
-//             return res.status(404).json({
-//                 message: "Product not found"
-//             });
-//         }
-
-//         // Remove product reference from categories
-//         await Category.updateMany(
-//             { _id: { $in: deletedProduct.categories } },
-//             { $pull: { products: deletedProduct._id } }
-//         );
-
-//         res.status(200).json({
-//             message: "Product deleted successfully"
-//         });
-//     } catch (error) {
-//         res.status(500).json({
-//             message: error.message
-//         });
-//     }
-// };
-
-// module.exports = {
-//     createProduct,
-//     getAllProducts,
-//     getProductById,
-//     updateProduct,
-//     deleteProduct
-// };

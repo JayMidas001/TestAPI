@@ -19,10 +19,13 @@ const productSchema = new mongoose.Schema({
     productCategory:{
         type: String,
     },
-    merchant:[{
+    email:{
+        type: String,
+    },
+    merchant:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Merchant"
-    }],
+    },
     categories:[{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Category"

@@ -9,16 +9,41 @@ const schemas = {
         "string.pattern.base": "Business name cannot start or end with a whitespace.",
         "string.base": "Business name cannot be empty."
       }),
-    fullName:validator.string()
+      fullName: validator.string()
+      .min(6)
+      .custom(value => value.trim())
+      .pattern(new RegExp("^[A-Za-z]+(\\s+[A-Za-z]+)+$"))
+      .required()
+      .messages({
+        "any.required": "Full name is required.",
+        "string.empty": "Full name cannot be empty.",
+        "string.min": "Full name must be at least 6 characters long.",
+        "string.pattern.base": "Please provide both first and last names separated by a space.",
+        "string.base": "Full name cannot be empty."
+      }),
+    customerFirstName: validator.string()
     .min(6)
-    .pattern(new RegExp("^[A-Za-z]+\\s+[A-Za-z]+$"))
+    .custom(value => value.trim())  // Trim leading and trailing whitespace
+    .pattern(new RegExp("^[A-Za-z]+$"))  // Ensure only alphabetic characters are allowed
     .required()
     .messages({
-      "any.required": "Full name is required.",
-      "string.empty": "Full name cannot be empty.",
-      "string.min": "Full name must be at least 6 characters long.",
-      "string.pattern.base": "Please provide both first and last names separated by a space.",
-      "string.base": "Full name cannot be empty."
+      "any.required": "First name is required.",
+      "string.empty": "First name cannot be empty.",
+      "string.min": "First name must be at least 6 characters long.",
+      "string.pattern.base": "First name must contain only alphabetic characters.",
+      "string.base": "First name cannot be empty."
+    }),
+    customerLastName: validator.string()
+    .min(6)
+    .custom(value => value.trim())  // Trim leading and trailing whitespace
+    .pattern(new RegExp("^[A-Za-z]+$"))  // Ensure only alphabetic characters are allowed
+    .required()
+    .messages({
+      "any.required": "First name is required.",
+      "string.empty": "First name cannot be empty.",
+      "string.min": "First name must be at least 6 characters long.",
+      "string.pattern.base": "First name must contain only alphabetic characters.",
+      "string.base": "First name cannot be empty."
     }),
     email:validator.string().email().required().messages({
         "any.required": "Email is required.",
@@ -51,6 +76,12 @@ const schemas = {
         'string.empty': 'Address cannot be empty.',
         "string.base": "Address cannot be empty."
       }),
+    customerAddress:validator.string().required().regex(/^[a-zA-Z0-9-,\. ]+$/).messages({
+        'string.pattern.base': 'Address can contain only alphabetic characters, numbers, spaces, or punctuations.',
+        'any.required': 'Address is required.',
+        'string.empty': 'Address cannot be empty.',
+        "string.base": "Address cannot be empty."
+      }),
     newPassword:validator.string()
     .pattern(new RegExp("^(?=.*[!@#$%^&*])(?=.*[A-Z]).{8,}$"))
     .messages({
@@ -74,7 +105,18 @@ const schemas = {
       'string.pattern.name': 'Store description can only contain letters, numbers, spaces, and common punctuation marks.',
       'string.max': 'Store description cannot exceed 400 characters.',
       'any.required': 'Store description is required.',
+    }),
+    city: validator.string()
+    .custom(value => value.trim())  // Trim leading and trailing whitespace
+    .pattern(new RegExp("^[A-Za-z]+(\\s[A-Za-z]+)?$"))  // Allow one or two words separated by a single space
+    .required()
+    .messages({
+      "any.required": "City is required.",
+      "string.empty": "City cannot be empty.",
+      "string.pattern.base": "City can only contain one or two words with alphabetic characters.",
+      "string.base": "City cannot be empty."
     })
+
 }
 
 const midasValidator = (validateAllFields = false) => {

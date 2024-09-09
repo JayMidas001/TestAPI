@@ -1,36 +1,59 @@
-const express = require ("express")
-require("./config/dbConfig")
-const port = process.env.port || 1188
-const cors = require(`cors`)
+const express = require("express");
+require("./config/dbConfig");
+require(`dotenv`).config()
+const port = process.env.port || 1188;
+const cors = require("cors");
 const morgan = require("morgan");
-const bodyParser = require(`body-parser`)
-const userRouter = require("./routers/userRouter")
-const productRouter = require("./routers/productRouter")
-const merchantRouter = require("./routers/merchantRouter")
-const fileUploader = require(`express-fileupload`);
+const bodyParser = require("body-parser");
+const session = require(`express-session`)
+const MongoStore = require('connect-mongo');
+const userRouter = require("./routers/userRouter");
+const productRouter = require("./routers/productRouter");
+const merchantRouter = require("./routers/merchantRouter");
+const fileUploader = require("express-fileupload");
 const categoryRouter = require("./routers/categoryRouter");
 const cartRouter = require("./routers/cartRouter");
+const keepServerAlive = require(`./helpers/keepServerAlive`)
 
-const app = express()
-app.use(bodyParser.json({limit: '100mb'}))
-app.use(bodyParser.urlencoded({limit: '100mb', extended: true }))
-
-app.use(express.json())
-app.use(fileUploader({
-    useTempFiles: true
+const app = express();
+app.use(express.json());
+app.use(bodyParser.json({ limit: "100mb" }));
+app.use(bodyParser.urlencoded({ limit: "100mb", extended: true }));
+app.use(session({
+    secret: process.env.session_secret,
+    resave: false,
+    saveUninitialized: true,
+    store: MongoStore.create({
+        mongoUrl: process.env.db,
+        ttl: 7200 // Time to live in seconds (1 hour = 3600 seconds)
+    }),
+    cookie: {
+        maxAge: 3600000, // 1 hour
+        httpOnly: true,
+        secure: false // Set to true if using HTTPS
+    }
 }));
-app.use(cors({origin:"*"}))
-app.use(morgan("dev"))
-app.use(`/api/v1`, userRouter)
-app.use(`/api/v1`, merchantRouter)
-app.use(`/api/v1`, productRouter)
-app.use(`/api/v1`, categoryRouter)
-app.use(`/api/v1`, cartRouter)
+app.use(fileUploader({ useTempFiles: true }));
+app.use(cors({ origin: "*" }));
+app.use(morgan("dev"));
 
-app.get(`/`, (req, res)=>{
-    res.send(`Welcome to Groceria!`)
-})
+app.use("/api/v1", userRouter);
+app.use("/api/v1", merchantRouter);
+app.use("/api/v1", productRouter);
+app.use("/api/v1", categoryRouter);
+app.use("/api/v1", cartRouter);
 
-app.listen(port,()=>{
-    console.log("App is currently Up & Running, server is listening to port:", port);
-})
+keepServerAlive();
+
+
+app.get('/1', (req, res) => {
+    res.send('Server is alive!');
+});
+
+app.get("/", (req, res) => {
+  res.send("Welcome to Groceria!");
+});
+
+app.listen(port, () => {
+  console.log("App is currently Up & Running, server is listening to port:", port);
+});

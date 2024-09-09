@@ -29,6 +29,14 @@ const userSchema = new mongoose.Schema({
     isSuperAdmin:{
         type:String
     },
+    orders: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Order'
+    }],
+    savedProducts: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product'
+    }],
     blackList:[]
 }, {timestamps: true})
 
