@@ -35,7 +35,7 @@ const signUp = async (req, res) => {
             // create object of the body
             const user = new merchModel({
                 businessName,
-                email,
+                email: email.toLowerCase(),
                 password: hashedPassword,
                 phoneNumber, 
                 address,
@@ -112,7 +112,7 @@ const userLogin = async (req, res) => {
             return res.status(400).json(`Please enter all fields (email & pasword).`)
         }
         const existingUser = await merchModel.findOne({
-            email
+            email: email.toLowerCase()
         });
         if (!existingUser) {
             return res.status(404).json({

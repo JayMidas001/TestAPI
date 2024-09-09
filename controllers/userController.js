@@ -30,7 +30,7 @@ const userSignUp = async (req, res) => {
             // create object of the body
             const user = new userModel({
                 fullName,
-                email,
+                email: email.toLowerCase(),
                 password: hashedPassword,
                 phoneNumber
             });
@@ -106,7 +106,7 @@ const userLogin = async (req, res) => {
         if( !email || !password ){
             return res.status(400).json(`Please enter all fields (email & pasword).`)
         }
-        const existingUser = await userModel.findOne({email});
+        const existingUser = await userModel.findOne({email: email.toLowerCase()});
         if (!existingUser) {
             return res.status(404).json({
                 message: "User not found."}); }
