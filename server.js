@@ -27,7 +27,6 @@ const store = new MongoDBStore({
 store.on('error', function(error) {
   console.error(error);
 });
-
 app.use(session({
   secret: process.env.session_secret,  // Use a secure secret
   resave: false,              // Don't save the session if it wasn't modified
@@ -35,11 +34,12 @@ app.use(session({
   store: store,               // Use the MongoDB store to persist sessions
   cookie: {
       maxAge: 1000 * 60 * 60 * 24,  // Session expires in 24 hours
-      secure: true                 // Set `secure: true` if using HTTPS
+      secure: process.env.NODE_ENV === 'production',  // Only secure in production
+      httpOnly: true  // Ensure cookies are only accessible via HTTP (not JavaScript)
   }
 }));
 app.use(fileUploader({ useTempFiles: true }));
-app.use(cors({ origin: "*" }));
+app.use(cors({ origin: "*", credentials: true}));
 app.use(morgan("dev"));
 
 app.use("/api/v1", userRouter);
