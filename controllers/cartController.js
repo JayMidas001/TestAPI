@@ -18,7 +18,6 @@ const addToCart = async (req, res) => {
     try {
         const { productId, quantity } = req.body;
         const userId = req.user ? req.user._id : null; // Check if user is authenticated
-        console.log(req.session); // For debugging purposes
 
         // Find the product to add
         const product = await productModel.findById(productId);
@@ -129,6 +128,54 @@ const removeItemFromCart = async (req, res) => {
             cart = getSessionCart(req);
         }
 
+        // Find the index of the item to remove
+        const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+
+        if (itemIndex > -1) {
+            // Remove the item from the cart
+            cart.items.splice(itemIndex, 1);
+
+            // Recalculate the total price
+            cart.totalPrice = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
+
+            if (userId) {
+                // Save the cart for authenticated users
+                await cart.save();
+            } else {
+                // Update session-based cart for guests
+                req.session.cart = cart;
+            }
+
+            res.status(200).json({
+                message: "Item removed from cart successfully",
+                data: cart
+            });
+        } else {
+            res.status(404).json({ message: "Item not found in cart" });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+const reduceItemQty = async (req, res) => {
+    try {
+        const { productId } = req.params;
+        const userId = req.user ? req.user._id : null;
+
+        let cart;
+        if (userId) {
+            // Authenticated user: use database cart
+            cart = await Cart.findOne({ user: userId });
+            if (!cart) {
+                return res.status(404).json({ message: "Cart not found" });
+            }
+        } else {
+            // Guest user: use session-based cart
+            cart = getSessionCart(req);
+        }
+
         // Find the index of the item to update
         const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
 
@@ -167,50 +214,6 @@ const removeItemFromCart = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
-const reduceItemQty = async (req, res) => {
-        try {
-          const { userId } = req.user;
-          const { productId } = req.body;
-      
-          if (!productId) {
-            return res.status(400).json({ error: 'Menu Item Id required' });
-          }
-      
-          const user = await userModel.findById(userId);
-          const product = await productModel.findById(productId);
-          const cart = await Cart.findOne({ user: userId });
-      
-          if (!user || !product || !cart) {
-            return res.status(404).json({ error: 'User, menu item or cart not found' });
-          }
-      
-          const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
-      
-          if (itemIndex > -1) {
-            // Reduce the quantity of the product by one
-            cart.items[itemIndex].quantity -= 1;
-      
-            // If the quantity reaches zero, remove the item from the cart
-            if (cart.items[itemIndex].quantity === 0) {
-              cart.items.splice(itemIndex, 1);
-            }
-      
-            // Recalculate the total price
-            cart.calculateTotalPrice();
-      
-            // Save the updated cart
-            await cart.save();
-      
-            res.status(200).json({ message: "Item quantity reduced successfully", data: cart });
-          } else {
-            res.status(404).json({ message: "Item not found in cart" });
-          }
-        } catch (error) {
-          res.status(500).json({ message: error.message });
-        }
-      };
-      
 
 // Clear the cart (works for both guests and authenticated users)
 const clearCart = async (req, res) => {
