@@ -30,7 +30,7 @@ app.use(session({
     cookie: {
         maxAge: 3600000, // 1 hour
         httpOnly: true,
-        secure: false // Set to true if using HTTPS
+        secure: true // Set to true if using HTTPS
     }
 }));
 app.use(fileUploader({ useTempFiles: true }));

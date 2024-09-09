@@ -129,12 +129,21 @@ const removeItemFromCart = async (req, res) => {
             cart = getSessionCart(req);
         }
 
-        // Find the index of the item to remove
+        // Find the index of the item to update
         const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
 
         if (itemIndex > -1) {
-            // Remove the item from the cart
-            cart.items.splice(itemIndex, 1);
+            // Get the item
+            const item = cart.items[itemIndex];
+
+            // Check if the quantity is greater than 1
+            if (item.quantity > 1) {
+                // Reduce quantity by 1
+                cart.items[itemIndex].quantity -= 1;
+            } else {
+                // If the quantity is 1, remove the item entirely
+                cart.items.splice(itemIndex, 1);
+            }
 
             // Recalculate the total price
             cart.totalPrice = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
@@ -148,7 +157,7 @@ const removeItemFromCart = async (req, res) => {
             }
 
             res.status(200).json({
-                message: "Item removed from cart successfully",
+                message: item.quantity > 0 ? "Item quantity reduced by one" : "Item removed from cart",
                 data: cart
             });
         } else {
