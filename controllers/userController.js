@@ -10,8 +10,6 @@ const {
 } = require(`../helpers/html.js`);
 
 
-
-
 const userSignUp = async (req, res) => {
     try {
 
@@ -100,6 +98,49 @@ const verifyEmail = async (req, res) => {
     }
 };
 
+const mergeGuestCartWithUserCart = async (userId, guestCart) => {
+    // Fetch the authenticated user's cart from the database
+    let userCart = await Cart.findOne({ user: userId });
+
+    if (!userCart) {
+        // If no cart exists for the user, create a new cart
+        userCart = new Cart({ user: userId, items: [], totalPrice: 0 });
+    }
+
+    // Merge the guest cart items with the user's cart
+    for (const guestItem of guestCart.items) {
+        const product = await productModel.findById(guestItem.product);
+        if (!product) continue; // Skip if product doesn't exist
+
+        const existingItemIndex = userCart.items.findIndex(
+            item => item.product.toString() === guestItem.product
+        );
+
+        if (existingItemIndex > -1) {
+            // Update quantity
+            userCart.items[existingItemIndex].quantity += guestItem.quantity;
+        } else {
+            // Add new item
+            userCart.items.push({
+                product: guestItem.product,
+                productName: product.productName,
+                quantity: guestItem.quantity,
+                price: product.productPrice,
+                productImage: product.productImage,
+                merchant: product.merchant
+            });
+        }
+    }
+
+    // Recalculate total price
+    userCart.totalPrice = userCart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
+
+    // Save the updated cart
+    await userCart.save();
+
+    return userCart;
+};
+
 const userLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -130,12 +171,23 @@ const userLogin = async (req, res) => {
             process.env.jwt_secret,
             { expiresIn: "3h" }
         );
-
+        const { guestCart } = req.body; // Get guestCart from the request body
+        if (guestCart && guestCart.items.length > 0) {
+            const mergedCart = await mergeGuestCartWithUserCart(existingUser._id, guestCart);
+            res.status(200).json({
+                message: "Login successful, cart merged",
+                data: existingUser,
+                cart: mergedCart,
+                token
+            });
+        }
+        
         res.status(200).json({
             message: "User logged in successfully",
             data: existingUser,
             token,
         });
+    
     } catch (error) {
         res.status(500).json({
             message: error.message,

@@ -1,23 +1,14 @@
 const Cart = require('../models/cartModel');
 const productModel = require('../models/productModel');
-const session = require(`express-session`)
-
-// Utility function to initialize or retrieve a session-based cart
-// Function to get or create session-based cart for guest users
-const getSessionCart = (req) => {
-    if (!req.session.cart) {
-        req.session.cart = {
-            items: [],
-            totalPrice: 0
-        };
-    }
-    return req.session.cart;
-};
 
 const addToCart = async (req, res) => {
     try {
-        const { productId, quantity } = req.body;
+        const { productId, quantity, guestCart } = req.body;
         const userId = req.user ? req.user._id : null; // Check if user is authenticated
+
+        if (quantity <= 0) {
+            return res.status(400).json({ message: "Quantity must be greater than zero" });
+        }
 
         // Find the product to add
         const product = await productModel.findById(productId);
@@ -25,83 +16,105 @@ const addToCart = async (req, res) => {
             return res.status(404).json({ message: "Product not found" });
         }
 
-        let cart;
         if (userId) {
-            // Authenticated user: use database cart
-            cart = await Cart.findOne({ user: userId });
+            // **Authenticated User**: Use database cart
+            let cart = await Cart.findOne({ user: userId });
             if (!cart) {
-                cart = new Cart({ user: userId, items: [] });
-            }
-        } else {
-            // Guest user: use session-based cart
-            cart = getSessionCart(req);
-        }
-
-        // Check if the product already exists in the cart
-        const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
-
-        if (itemIndex > -1) {
-            // If the product exists in the cart, update the quantity
-            cart.items[itemIndex].quantity += quantity;
-        } else {
-            // If the product doesn't exist, add it to the cart
-            cart.items.push({
-                product: productId,
-                productName: product.productName,
-                quantity,
-                price: product.productPrice,
-                productImage: product.productImage,
-                merchant: product.merchant
-            });
-        }
-
-        // Recalculate the total price
-        cart.totalPrice = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
-
-        if (userId) {
-            // Save the cart for authenticated users
-            await cart.save();
-        } else {
-            // Update session-based cart for guests
-            req.session.cart = cart;
-
-            // Ensure session is saved after modification
-            req.session.save((err) => {
-                if (err) {
-                    return res.status(500).json({ message: "Failed to save session." });
-                }
-                res.status(200).json({
-                    message: "Item added to cart successfully",
-                    data: cart
+                cart = new Cart({
+                    user: userId,
+                    items: [],
                 });
-            });
-            return;
-        }
+            }
 
-        res.status(200).json({
-            message: "Item added to cart successfully",
-            data: cart
-        });
+            // Check if the product already exists in the cart
+            const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+
+            if (itemIndex > -1) {
+                // If the product exists in the cart, update the quantity
+                cart.items[itemIndex].quantity += quantity;
+            } else {
+                // If the product doesn't exist, add it to the cart
+                cart.items.push({
+                    product: productId,
+                    productName: product.productName,
+                    quantity,
+                    price: product.productPrice,
+                    productImage: product.productImage,
+                    merchant: product.merchant
+                });
+            }
+
+            // Recalculate the total price
+            cart.totalPrice = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
+
+            // Save the cart
+            await cart.save();
+
+            res.status(200).json({
+                message: "Item added to cart successfully",
+                data: cart
+            });
+
+        } else {
+            // **Guest User**: Handle cart data from the client
+            if (!guestCart) {
+                return res.status(400).json({ message: "Guest cart data is required" });
+            }
+
+            // Validate and process the guest cart
+            // (For demonstration purposes, we'll just return the guest cart)
+
+            // Update the guest cart with the new product
+            const itemIndex = guestCart.items.findIndex(item => item.product === productId);
+
+            if (itemIndex > -1) {
+                // If the product exists in the cart, update the quantity
+                guestCart.items[itemIndex].quantity += quantity;
+            } else {
+                // If the product doesn't exist, add it to the cart
+                guestCart.items.push({
+                    product: productId,
+                    productName: product.productName,
+                    quantity,
+                    price: product.productPrice,
+                    productImage: product.productImage,
+                    merchant: product.merchant
+                });
+            }
+
+            // Recalculate the total price
+            guestCart.totalPrice = guestCart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
+
+            res.status(200).json({
+                message: "Item added to guest cart successfully",
+                data: guestCart
+            });
+        }
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// View cart items (works for both guests and authenticated users)
+
 const viewCart = async (req, res) => {
     try {
-        const userId = req.user ? req.user._id : null;
+        const userId = req.user ? req.user._id : null; // Check if the user is authenticated
+        const guestCart = req.body.guestCart; // Guest cart data sent from the client
 
         let cart;
+
         if (userId) {
-            // Authenticated user: use database cart
+            // **Authenticated User**: Fetch cart from the database
             cart = await Cart.findOne({ user: userId }).populate('items.product');
-            if (!cart) {
-                return res.status(404).json({ message: "Cart not found" });
+            if (!cart || cart.items.length === 0) {
+                return res.status(404).json({ message: "Your cart is empty" });
             }
         } else {
-            // Guest user: use session-based cart
-            cart = getSessionCart(req);
+            // **Guest User**: Use the guest cart provided by the client
+            if (!guestCart || guestCart.items.length === 0) {
+                return res.status(404).json({ message: "Your cart is empty" });
+            }
+            cart = guestCart;
         }
 
         res.status(200).json({
@@ -113,147 +126,113 @@ const viewCart = async (req, res) => {
     }
 };
 
-// Remove an item from the cart (works for both guests and authenticated users)
+
 const removeItemFromCart = async (req, res) => {
     try {
-        const { productId } = req.body;
-        const userId = req.user ? req.user._id : null;
+        const { productId, guestCart } = req.body;
+        const userId = req.user ? req.user._id : null; // Check if the user is authenticated
 
         let cart;
+
         if (userId) {
-            // Authenticated user: use database cart
+            // **Authenticated User**: Fetch and update cart from the database
             cart = await Cart.findOne({ user: userId });
             if (!cart) {
                 return res.status(404).json({ message: "Cart not found" });
             }
-        } else {
-            // Guest user: use session-based cart
-            cart = getSessionCart(req);
-        }
 
-        // Find the index of the item to remove
-        const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+            // Find the index of the item to remove
+            const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
 
-        if (itemIndex > -1) {
-            // Remove the item from the cart
-            cart.items.splice(itemIndex, 1);
-
-            // Recalculate the total price
-            cart.totalPrice = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
-
-            if (userId) {
-                // Save the cart for authenticated users
-                await cart.save();
-            } else {
-                // Update session-based cart for guests
-                req.session.cart = cart;
-            }
-
-            res.status(200).json({
-                message: "Item removed from cart successfully",
-                data: cart
-            });
-        } else {
-            res.status(404).json({ message: "Item not found in cart" });
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-
-const reduceItemQty = async (req, res) => {
-    try {
-        const { productId } = req.body;
-        const userId = req.user ? req.user._id : null;
-
-        let cart;
-        if (userId) {
-            // Authenticated user: use database cart
-            cart = await Cart.findOne({ user: userId });
-            if (!cart) {
-                return res.status(404).json({ message: "Cart not found" });
-            }
-        } else {
-            // Guest user: use session-based cart
-            cart = getSessionCart(req);
-        }
-
-        // Find the index of the item to update
-        const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
-
-        if (itemIndex > -1) {
-            // Get the item
-            const item = cart.items[itemIndex];
-
-            // Check if the quantity is greater than 1
-            if (item.quantity > 1) {
-                // Reduce quantity by 1
-                cart.items[itemIndex].quantity -= 1;
-            } else {
-                // If the quantity is 1, remove the item entirely
+            if (itemIndex > -1) {
+                // Remove the item from the cart
                 cart.items.splice(itemIndex, 1);
-            }
 
-            // Recalculate the total price
-            cart.totalPrice = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
+                // Recalculate the total price
+                cart.totalPrice = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
 
-            if (userId) {
-                // Save the cart for authenticated users
+                // Save the updated cart
                 await cart.save();
+
+                return res.status(200).json({
+                    message: "Item removed from cart successfully",
+                    data: cart
+                });
             } else {
-                // Update session-based cart for guests
-                req.session.cart = cart;
+                return res.status(404).json({ message: "Item not found in cart" });
             }
 
-            res.status(200).json({
-                message: item.quantity > 0 ? "Item quantity reduced by one" : "Item removed from cart",
-                data: cart
-            });
         } else {
-            res.status(404).json({ message: "Item not found in cart" });
+            // **Guest User**: Update the guest cart provided by the client
+            if (!guestCart || guestCart.items.length === 0) {
+                return res.status(404).json({ message: "Cart is empty" });
+            }
+
+            // Find the index of the item to remove
+            const itemIndex = guestCart.items.findIndex(item => item.product === productId);
+
+            if (itemIndex > -1) {
+                // Remove the item from the cart
+                guestCart.items.splice(itemIndex, 1);
+
+                // Recalculate the total price
+                guestCart.totalPrice = guestCart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
+
+                return res.status(200).json({
+                    message: "Item removed from cart successfully",
+                    data: guestCart
+                });
+            } else {
+                return res.status(404).json({ message: "Item not found in cart" });
+            }
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// Clear the cart (works for both guests and authenticated users)
 const clearCart = async (req, res) => {
     try {
-        const userId = req.user ? req.user._id : null;
+        const userId = req.user ? req.user._id : null; // Check if the user is authenticated
+        const guestCart = req.body.guestCart; // Guest cart data sent from the client
 
         let cart;
+
         if (userId) {
-            // Authenticated user: use database cart
+            // **Authenticated User**: Fetch and clear the cart from the database
             cart = await Cart.findOne({ user: userId });
             if (!cart) {
                 return res.status(404).json({ message: "Cart not found" });
             }
+
+            // Clear the cart items and reset totalPrice to 0
             cart.items = [];
             cart.totalPrice = 0;
+
+            // Save the cleared cart
             await cart.save();
         } else {
-            // Guest user: clear session-based cart
-            cart = getSessionCart(req);
-            cart.items = [];
-            cart.totalPrice = 0;
-            req.session.cart = cart;
+            // **Guest User**: Clear the cart provided by the client
+            if (!guestCart || guestCart.items.length === 0) {
+                return res.status(404).json({ message: "Cart is already empty" });
+            }
+
+            // Clear the guest cart
+            guestCart.items = [];
+            guestCart.totalPrice = 0;
+
+            // Send back the cleared guest cart
+            cart = guestCart;
         }
 
         res.status(200).json({
             message: "Cart cleared successfully",
-            data: cart
+            data: cart,
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-module.exports = {
-    addToCart,
-    viewCart,
-    removeItemFromCart,
-    reduceItemQty,
-    clearCart
-}
+
+module.exports = { addToCart, viewCart, removeItemFromCart, clearCart}
