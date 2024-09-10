@@ -3,12 +3,11 @@ const productModel = require('../models/productModel');
 
 const addToCart = async (req, res) => {
     try {
-        const { productId, quantity, guestCart } = req.body;
-        const userId = req.user ? req.user._id : null; // Check if user is authenticated
+        const { productId, quantity } = req.body;
+        const {userId} = req.user
 
-        if (quantity <= 0) {
-            return res.status(400).json({ message: "Quantity must be greater than zero" });
-        }
+        // Find the cart associated with the user
+        let cart = await Cart.findOne({ user: userId });
 
         // Find the product to add
         const product = await productModel.findById(productId);
@@ -16,85 +15,44 @@ const addToCart = async (req, res) => {
             return res.status(404).json({ message: "Product not found" });
         }
 
-        if (userId) {
-            // **Authenticated User**: Use database cart
-            let cart = await Cart.findOne({ user: userId });
-            if (!cart) {
-                cart = new Cart({
-                    user: userId,
-                    items: [],
-                });
-            }
-
-            // Check if the product already exists in the cart
-            const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
-
-            if (itemIndex > -1) {
-                // If the product exists in the cart, update the quantity
-                cart.items[itemIndex].quantity += quantity;
-            } else {
-                // If the product doesn't exist, add it to the cart
-                cart.items.push({
-                    product: productId,
-                    productName: product.productName,
-                    quantity,
-                    price: product.productPrice,
-                    productImage: product.productImage,
-                    merchant: product.merchant
-                });
-            }
-
-            // Recalculate the total price
-            cart.totalPrice = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
-
-            // Save the cart
-            await cart.save();
-
-            res.status(200).json({
-                message: "Item added to cart successfully",
-                data: cart
-            });
-
-        } else {
-            // **Guest User**: Handle cart data from the client
-            if (!guestCart) {
-                return res.status(400).json({ message: "Guest cart data is required" });
-            }
-
-            // Validate and process the guest cart
-            // (For demonstration purposes, we'll just return the guest cart)
-
-            // Update the guest cart with the new product
-            const itemIndex = guestCart.items.findIndex(item => item.product === productId);
-
-            if (itemIndex > -1) {
-                // If the product exists in the cart, update the quantity
-                guestCart.items[itemIndex].quantity += quantity;
-            } else {
-                // If the product doesn't exist, add it to the cart
-                guestCart.items.push({
-                    product: productId,
-                    productName: product.productName,
-                    quantity,
-                    price: product.productPrice,
-                    productImage: product.productImage,
-                    merchant: product.merchant
-                });
-            }
-
-            // Recalculate the total price
-            guestCart.totalPrice = guestCart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
-
-            res.status(200).json({
-                message: "Item added to guest cart successfully",
-                data: guestCart
+        // If the cart doesn't exist, create one
+        if (!cart) {
+            cart = new Cart({
+                user: userId,
+                items: [],
             });
         }
+
+        // Check if the product already exists in the cart
+        const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+
+        if (itemIndex > -1) {
+            // If the product exists in the cart, update the quantity
+            cart.items[itemIndex].quantity += quantity;
+        } else {
+            // If the product doesn't exist, add it to the cart
+            cart.items.push({
+                product: productId,
+                productName: product.productName,
+                quantity,
+                price: product.productPrice,
+                productImage: product.productImage
+            });
+        }
+        // Recalculate the total price
+        cart.calculateTotalPrice();
+
+        // Save the cart
+        await cart.save();
+
+        res.status(200).json({
+            message: "Item added to cart successfully",
+            data: cart
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-};
-
+}
 
 const viewCart = async (req, res) => {
     try {
