@@ -4,7 +4,7 @@ const productModel = require('../models/productModel');
 const addToCart = async (req, res) => {
     try {
         const { productId, quantity } = req.body;
-        const {userId} = req.user
+        const userId = req.user._id
 
         // Find the cart associated with the user
         let cart = await Cart.findOne({ user: userId });
